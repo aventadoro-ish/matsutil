@@ -69,5 +69,3 @@ print(t.__len__())
 # print('\n'.join(dir(Table)))
 for i in t:
     print(i[0])
-
-print('hello')
