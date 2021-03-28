@@ -1,15 +1,27 @@
 from table import Table
+import random
 
-t = Table(['name', 'score'])
-t.__add__(['Mat', 1])
-t.__add__(['Valya', 2])
-t.__add__(['Tima', 3])
-t.__add__(['Ilya', 4])
-t.__add__(['Mat', 5])
-print(t.get_entry_by_column_name('name', 'Mat'))
 
-print(t.__len__())
+names = ['Mat', 'Valya', 'Tima', 'Ilya', 'Anton', 'Liza', 'Egor']
+statuses = ['+', '-', '0', '=']
+
+
+t = Table(['name', 'score', 'age', 'status'])
+
+for i in range(15):
+	this_name = random.choice(names)
+	this_score = random.randrange(0, 15)
+	this_age = random.randrange(18, 25)
+	this_status = random.choice(statuses)
+
+	t.__add__([this_name, this_score, this_age, this_status])
 
 # print('\n'.join(dir(Table)))
-for i in t:
-    print(i[0])
+
+print(t)
+
+print(t.get_entry_by_column_name('status', '='))
+
+# # iteration test:
+# for i in t:
+#     print(i[0])
