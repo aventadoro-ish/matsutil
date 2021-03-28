@@ -19,7 +19,6 @@ for i in range(15):
 # print('\n'.join(dir(Table)))
 
 print(t)
-
 print(t.get_entry_by_column_name('status', '='))
 
 # # iteration test:

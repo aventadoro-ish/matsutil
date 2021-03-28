@@ -42,7 +42,12 @@ class Table:
 	def __iter__(self):
 		return TableIterator(self)
 
-	def __str__(self, index_len = 4, int_repr_base = 10):
+	def __str__(self):
+		result = self.__repr__() + '\n'
+		result += str(self.column_names)
+		return result
+
+	def get_printable_repr(self, index_len = 4, int_repr_base = 10):
 		result: str = ''
 		max_column_len: List[int] = [0] * self.get_columns()
 		rows = [i for i in self]
@@ -81,6 +86,9 @@ class Table:
 
 	def get_rows(self) -> int:
 		return self.__len__()
+
+	def get_size(self) -> tuple:
+		return (self.get_columns(), self.get_rows())
 
 	def get_entry_by_column_id(self, column_id: int, search_for):
 		result = []
