@@ -7,7 +7,7 @@ setup(
     author='Matvey',
     # author_email='jladan@uwaterloo.ca',
     # Needed to actually package something
-    packages=['TextMenu'],
+    packages=['TextMenu', 'Table', 'Utility'],
     # Needed for dependencies
     # install_requires=['numpy'],
     # *strongly* suggested for sharing
@@ -16,5 +16,5 @@ setup(
     license='MIT',
     description='An example of a python package from pre-existing code',
     # We will also need a readme eventually (there will be a warning)
-    # long_description=open('README.txt').read(),
+    long_description=open('README.txt').read()
 )
