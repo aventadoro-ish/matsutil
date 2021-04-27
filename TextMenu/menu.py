@@ -31,7 +31,16 @@ class TextMenu:
 		for idx, i in enumerate(keys):
 			line = f'-{str(i)[1:-1].ljust(max_width, " ")}'
 			if self.comment_options is not None and comments[idx] is not None:
-				line += '(' + str(comments[idx]) + ')'
+				comment = str(comments[idx])
+				if '\n' in comment:
+					comment_split = comment.split('\n')
+					line += '(' + comment_split[0]
+					for section in comment_split[1:]:
+						line += '\n' + '\t' * self.tabs + ' ' * (max_width + 2) + section
+
+					line += ')'
+				else:
+					line += '(' + comment + ')'
 			else:
 				pass
 			self._print_(line)
@@ -64,7 +73,7 @@ class TextMenu:
 			implemented_calls['e'] = self.exit_cmd
 
 	def __init__(self, prompt: str = None, options: dict = None, comment_options: dict = None,
-				add_common_calls: bool = True, tabs: int = 0):
+				 add_common_calls: bool = True, tabs: int = 0):
 		"""Initializes menu class
 		If used as indented menu should be called return menu.run()
 
@@ -154,7 +163,7 @@ class TextMenu:
 
 	def _print_(self, line):
 		"""Prints line with tabulation"""
-		print('\t'*self.tabs + line)
+		print('\t' * self.tabs + line)
 
 	def _handle_input_(self, choice, params):
 		"""Internal utility method that handles user choice and params (if given)"""
