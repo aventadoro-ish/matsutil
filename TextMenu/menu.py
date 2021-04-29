@@ -1,3 +1,6 @@
+import re
+
+
 class TextMenu:
 	"""Class implementation of multi-layer'able console text menu"""
 
@@ -73,7 +76,7 @@ class TextMenu:
 			implemented_calls['e'] = self.exit_cmd
 
 	def __init__(self, prompt: str = None, options: dict = None, comment_options: dict = None,
-				 add_common_calls: bool = True, tabs: int = 0):
+				 add_common_calls: bool = True, tabs: int = 0, default_method = None):
 		"""Initializes menu class
 		If used as indented menu should be called return menu.run()
 
@@ -90,11 +93,14 @@ class TextMenu:
 			Do you want to specify common menu calls like 'help', 'exit' etc
 		:param tabs: int
 			Number of tabs before any print
+		:param default_method: method
+			Method that will be executed automatically if no options match given call
 
 		"""
 		# finished is used for internal menu loop
 		self.finished: bool = False
 		self.tabs = tabs
+		self.default = default_method
 
 		# heading of the menu
 		try:
@@ -161,19 +167,36 @@ class TextMenu:
 		for key, val in options.items():
 			self.options[key] = val
 
+	def set_default_method(self, method):
+		self.default = method
+
 	def _print_(self, line):
 		"""Prints line with tabulation"""
 		print('\t' * self.tabs + line)
 
-	def _handle_input_(self, choice, params):
+	def _handle_input_(self, user_input):
 		"""Internal utility method that handles user choice and params (if given)"""
 		handled = None
+
+		choice = re.split(r' |,', user_input, 1)
+		option = choice[0]
 		try:
-			handled = self.options[choice](params)
+			params = choice[1]
+		except IndexError:
+			params = None
+
+		try:
+			handled = self.options[option](params)
 		except TypeError:
-			handled = self.options[choice]()
-		except KeyError as e:
-			handled = False
+			handled = self.options[option]()
+		except KeyError:
+			if self.default is None:
+				handled = False
+			else:
+				try:
+					handled = self.default(user_input)
+				except TypeError:
+					handled = self.default()
 
 		return handled
 
@@ -182,14 +205,9 @@ class TextMenu:
 		If used as indented menu should be called return menu.run()
 		"""
 		while not self.finished:
-			inp = input(self.prompt).lower().split(' ', 1)
-			choice = inp[0]
-			try:
-				params = inp[1]
-			except IndexError:
-				params = None
+			choice = input(self.prompt).lower()
 
-			handled = self._handle_input_(choice, params)
+			handled = self._handle_input_(choice)
 
 			if handled == self._EXIT_MENU_:
 				return handled

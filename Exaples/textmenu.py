@@ -6,7 +6,7 @@ def echo_cmd(echo: str):
 
 
 def open_idn_menu(prompt: str):
-	idn_menu = TextMenu('\tIndented Menu: ', {'echo': echo_cmd}, tabs=1)
+	idn_menu = TextMenu('\tIndented Menu: ', {'echo': echo_cmd}, tabs=1, default_method=echo_cmd)
 	return idn_menu.run()
 
 
