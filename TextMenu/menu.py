@@ -75,7 +75,7 @@ class TextMenu:
 		if not ('e' in implemented_calls):
 			implemented_calls['e'] = self.exit_cmd
 
-	def __init__(self, prompt: str = None, options: dict = None, comment_options: dict = None,
+	def __init__(self, prompt: str = None, options: dict = {}, comment_options: dict = {},
 				 add_common_calls: bool = True, tabs: int = 0, default_method = None):
 		"""Initializes menu class
 		If used as indented menu should be called return menu.run()
@@ -149,12 +149,13 @@ class TextMenu:
 		for key, val in comments.items():
 			self.comment_options[key] = val
 
-	def add_option(self, option: set):
+	def add_option(self, call: str, function):
 		"""Add one menu option
-		:param option: set
-			Option to add, e.g. ('option': option_cmd)
+		:param call: str - how to call
+		:param function: function to call
+			Option to add, e.g. 'option', option_cmd
 		"""
-		self.options[option[0]] = option[1]
+		self.options[call] = function
 
 	def add_options(self, options: dict):
 		"""Add multiple menu options
@@ -178,17 +179,44 @@ class TextMenu:
 		"""Internal utility method that handles user choice and params (if given)"""
 		handled = None
 
-		choice = re.split(r' |,', user_input, 1)
-		option = choice[0]
-		try:
-			params = choice[1]
-		except IndexError:
-			params = None
+		user_input = re.split(r' |,', user_input, 1)
+		option = user_input[0]	# function to call from self.options dict
 
+		kwarg_dict = {}
+		arg_list = []
 		try:
-			handled = self.options[option](params)
-		except TypeError:
-			handled = self.options[option]()
+			if len(user_input) == 1:
+				# call function with no arguments
+				handled = self.options[option]()
+				return handled
+			else:
+				# separate parameters and proceed
+				params = user_input[1]
+
+			# identify each argument, separate args and kwargs
+			for argument in params.split(','):
+				tokens = re.split('\s*=\s*', argument)
+				# print(argument, tokens)
+				if len(tokens) == 1:
+					# argument is positional (arg)
+					arg_list.append(eval(tokens[0].strip(' ')))
+
+				else:
+					# argument is keyword (kwarg)
+					this_keyword = tokens[0].strip(' ')
+					if this_keyword == '':
+						raise SyntaxError
+					else:
+						kwarg_dict[this_keyword] = eval(tokens[1].strip(' '))
+
+			# try calling function with args and/or kwargs
+			# raises KeyError if function is not one of the options
+			handled = self.options[option](*arg_list, **kwarg_dict)
+
+		# except IndexError:
+		# 	# call function with no params
+		except SyntaxError:
+			print('Invalid syntax for calling function')
 		except KeyError:
 			if self.default is None:
 				handled = False
