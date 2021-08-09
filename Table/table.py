@@ -1,104 +1,147 @@
 from typing import List
 
 
-class TableIterator:
-	def __init__(self, table):
-		self.table = table
-		self.index = 0
-
-	def __next__(self):
-		"""Returns the next value from team object's lists """
-		if self.index < self.table.__len__():
-			result = self.table.table[self.index]
-			self.index += 1
-			return result
-
-		# End of Iteration
-		raise StopIteration
-
-
-class TableColumnFormatException(Exception):
-	def __init__(self, expected: List[str], received: List[str]):
-		self.expected = expected
-		self.received = received
-
-	def __str__(self):
-		return 'expected columns: ' + str(self.expected) + '; received: ' + str(self.received)
-
-
 class Table:
-	def __init__(self, column_names: List[str]):
-		self.column_names = column_names
-		self.table: List[List[object]] = []
+    """
+    TODO: docstring
+    """
+    def __init__(self, *args):
+        self.entry_format = tuple(args)
+        self.table = []
 
-	def __add__(self, entry: List[object]):
-		if entry.__len__() != self.column_names.__len__():
-			raise Table.TableColumnFormatException(self.column_names, entry)
-		self.table.append(entry)
+    def __str__(self):
+        max_col_lengths = [0] * len(self.entry_format)
+        for entry in (*self, self.entry_format):
+            # TODO: reformat this nested loop
+            for idx, cell in enumerate(entry):
+                max_col_lengths[idx] = max(max_col_lengths[idx], len(str(cell)))
 
-	def __len__(self):
-		return self.table.__len__()
+        # print headers and separator
+        # TODO: [headers, separator, line_0, line_1 ... line_n] - ???
+        headers = separator = ''
+        for idx, header in enumerate(self.entry_format):
+            # center header inside printed cell
+            headers += f'{str(self.entry_format[idx]):^{max_col_lengths[idx]}}|'
+            separator += '-' * max_col_lengths[idx] + '+'
 
-	def __iter__(self):
-		return TableIterator(self)
+        output = headers[:-1] + '\n' + separator[:-1] + '\n'
 
-	def __str__(self):
-		result = self.__repr__() + '\n'
-		result += str(self.column_names)
-		return result
+        # lines
+        for entry in self:
+            for idx, cell in enumerate(entry):
+                # center cell text inside printed cell
+                output += f'{str(cell):^{max_col_lengths[idx]}}|'
 
-	def get_printable_repr(self, index_len = 4, int_repr_base = 10):
-		result: str = ''
-		max_column_len: List[int] = [0] * self.get_columns()
-		rows = [i for i in self]
+            output = output[:-1] + '\n'
 
-		for row in [self.column_names] + rows:
-			for cell_idx, cell in enumerate(row):
-				if str(cell).__len__() > max_column_len[cell_idx]:
-					max_column_len[cell_idx] = str(cell).__len__()
+        return output[:-1]
 
-		result = ' ' * index_len + '|'
+    def __iter__(self):
+        for entry in self.table:
+            yield entry
 
-		partition = '-' * (result.__len__()-1) + '+'
-		for i in max_column_len:
-			partition += '-' * i + '+'
-		partition = partition[:-1]
+    def __getitem__(self, item):
+        return self.table[item]
 
-		for col_idx, column in enumerate(self.column_names):
-			result += '{:^{}}'.format(str(column), max_column_len[col_idx]) + '|'
+    def __len__(self) -> int:
+        """
+        Get number of entries (rows) in this table
+        :return: int
+        :rtype:
+        """
+        return len(self.table)
 
-		result = result[:-1]
-		result += '\n'
-		result += partition + '\n'
+    def append(self, *args) -> int:
+        """
+        Add new entry to the table. Return this entry id
+        :raises IndexError if fields do not match table format
+        :param args: fields according to table format
+        :type args:
+        :return: this entry id
+        :rtype:
+        """
+        if len(args) != len(self.entry_format):
+            raise IndexError
 
-		for row_idx, row in enumerate(rows):
-			result += str(row_idx).zfill(index_len) + '|'
-			for cell_idx, cell in enumerate(row):
-				result += '{:^{}}'.format(str(cell), max_column_len[cell_idx]) + '|'
+        self.table.append(list(args))
+        return len(self.table)-1
 
-			result = result[:-1]
-			result += '\n'
+    def entry_by_id(self, id_: int) -> List[object]:
+        """
+        Get curtain row
+        :param id_: row number
+        :type id_: int
+        :return: entry with given id_ (row)
+        :rtype:
+        """
+        return self.table[id_]
 
-		return result
+    def entry_by_value(self, value, column) -> List[object]:
+        """
+        Returns entry that has value in certain column (or column id, if int passed)
+        :raises IndexError if search failed
+        :raises ValueError if search passed column does not exist
+        :param value: search for
+        :type value:
+        :param column: column in which to search (or col_id if int is passed)
+        :type column:
+        :return: first entry found
+        :rtype: List[object]
+        """
+        if type(column) is not int:
+            column = self.entry_format.index(column)
 
-	def get_columns(self) -> int:
-		return self.column_names.__len__()
+        # TODO: rewrite
+        for entry in self:
+            if entry[column] == value:
+                return entry
+        raise IndexError
 
-	def get_rows(self) -> int:
-		return self.__len__()
+    def entries_by_value(self, value, column) -> List[List[object]]:
+        """
+        Get all entries that match given value in given column.
+        If type of column is int, it is interpreted as row id.
+        :raises IndexError if such entries do not exist.
+        :raises ValueError if such column does not exist.
+        :param value: search for
+        :type value:
+        :param column: column in which to search for
+        :type column:
+        :return: list of entries that match given value in given column
+        :rtype: List[List[object]]
+        """
+        output = []
 
-	def get_size(self) -> tuple:
-		return (self.get_columns(), self.get_rows())
+        if type(column) is not int:
+            column = self.entry_format.index(column)
 
-	def get_entry_by_column_id(self, column_id: int, search_for):
-		result = []
-		for i in self.table:
-			if i[column_id] == search_for:
-				result.append(i)
+        # TODO: rewrite for loop
+        for entry in self:
+            if entry[column] == value:
+                output.append(entry)
 
-		return result
+        if len(output) != 0:
+            return output
 
-	def get_entry_by_column_name(self, column_name: str, search_for):
-		column_idx = self.column_names.index(column_name)
-		return self.get_entry_by_column_id(column_idx, search_for)
+        raise IndexError
 
+    def change_cell_value(self, entries: List, column, new_val):
+        """
+        Change cell value of one or more entry in a given column to new value.
+        :param entries: one or more entry that needs to be changed
+        :type entries: List[object] or List[List[objects]]
+        :param column: name of the column or column id
+        :type column: str or int
+        :param new_val: new cell value
+        :type new_val:
+        :return:
+        :rtype:
+        """
+        if type(column) is not int:
+            column = self.entry_format.index(column)
+
+        if type(entries) is not List[List]:
+            entries[column] = new_val
+        else:
+            for entry in entries:
+                entry[column] = new_val
