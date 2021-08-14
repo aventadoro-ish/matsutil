@@ -145,3 +145,20 @@ class Table:
         else:
             for entry in entries:
                 entry[column] = new_val
+
+    def column(self, column) -> List[object]:
+        """
+        Get all cells in a given column
+        :param column: name of the column or column id
+        :type column: str or int
+        :return: list of cells
+        :rtype: List[object]
+        """
+        if type(column) is not int:
+            column = self.entry_format.index(column)
+
+        output = []
+        for entry in self:
+            output.append(entry[column])
+
+        return output
